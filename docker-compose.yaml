@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  crossbar:
+    image: crossbario/crossbar
+    ports:
+      - 8080:8080
+    volumes:
+      - "./crossbar/:/node/"
