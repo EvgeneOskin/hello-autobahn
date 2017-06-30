@@ -1,9 +1,25 @@
-version: '2'
+---
+version: '2.1'
 
 services:
-  crossbar:
+
+  node:
+    build: autobahn
+    environment:
+      ROUTER_URL: ws://router:8080/ws
+      REALM: realm1
+    depends_on:
+      router:
+        condition: service_healthy
+
+  router:
     image: crossbario/crossbar
     ports:
       - 8080:8080
     volumes:
-      - "./crossbar/:/node/"
+      - ./crossbar/:/node/
+    healthcheck:
+      test: "test -f /node/.crossbar/node.pid"
+      interval: 30s
+      timeout: 10s
+      retries: 5
