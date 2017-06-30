@@ -2,6 +2,7 @@ import os
 import asyncio
 import txaio
 from autobahn.wamp.types import RegisterOptions
+from autobahn import wamp
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 
 
@@ -17,8 +18,20 @@ class HelloComponent(ApplicationSession):
         self._ident = defaults.authid
         self._type = 'Python'
 
-        await self.register(hello, 'com.eoskin.hello',
-                            options=RegisterOptions(invoke='roundrobin'))
+        results = await self.register(self)
+
+        for res in results:
+            if isinstance(res, wamp.protocol.Registration):
+                # res is an Registration instance
+                self.log.warning(
+                    "Ok, registered procedure with registration ID {}"
+                    .format(res.id)
+                )
+            else:
+                # res is an Failure instance
+                self.log.warning(
+                    "Failed to register procedure: {}".format(res)
+                )
 
     def onLeave(self, defaults):
         self.log.info('Router session closed')
@@ -31,9 +44,9 @@ class HelloComponent(ApplicationSession):
         except:
             pass
 
-
-def hello(name):
-    return ("Hello {}".format(name),)
+    @wamp.register('com.eoskin.hello')
+    def hello(self, name):
+        return ("Hello {}".format(name),)
 
 
 if __name__ == "__main__":
