@@ -3,11 +3,22 @@ version: '2.1'
 
 services:
 
-  node:
-    build: autobahn
+  auth:
+    build: authenticator
     environment:
-      ROUTER_URL: ws://router:8080/ws
+      ROUTER_URL: ws://router:8080/backend
       REALM: realm1
+      SECRET_TICKET: 'super-secret'
+    depends_on:
+      router:
+        condition: service_healthy
+
+  node:
+    build: backend
+    environment:
+      ROUTER_URL: ws://router:8080/backend
+      REALM: realm1
+      SECRET_TICKET: 'super-secret'
     depends_on:
       router:
         condition: service_healthy
@@ -16,8 +27,10 @@ services:
     image: crossbario/crossbar
     ports:
       - 8080:8080
+    environment:
+      SECRET_TICKET: 'super-secret'
     volumes:
-      - ./crossbar/:/node/
+      - ./router/:/node/
     healthcheck:
       test: "test -f /node/.crossbar/node.pid"
       interval: 30s

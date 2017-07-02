@@ -1,6 +1,5 @@
-FROM python:3.6-alpine
+FROM crossbario/autobahn-python:cpy3-minimal-aio-17.6.1
 
-RUN mkdir /app/
 WORKDIR /app/
 
 ADD requirements.txt .

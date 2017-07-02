@@ -1,7 +1,5 @@
 import os
 import asyncio
-import txaio
-from autobahn.wamp.types import RegisterOptions
 from autobahn import wamp
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
 
@@ -10,7 +8,14 @@ class HelloComponent(ApplicationSession):
 
     def onConnect(self):
         self.log.info("Client connected to {}.".format(self.config.realm))
-        self.join(self.config.realm, ['anonymous'])
+        self.join(self.config.realm, ['ticket'], 'backend')
+
+    def onChallenge(self, challenge):
+        print('challenge', os.getenv('SECRET_TICKET'))
+        if challenge.method == 'ticket':
+            return os.getenv('SECRET_TICKET')
+        else:
+            raise Exception("Invalid auth method")
 
     async def onJoin(self, defaults):
         self.log.info('client session joined {}'.format(defaults))
@@ -34,7 +39,7 @@ class HelloComponent(ApplicationSession):
                 )
 
     def onLeave(self, defaults):
-        self.log.info('Router session closed')
+        self.log.info(f'Router session closed:\n${defaults}')
         self.disconnect()
 
     def onDisconnect(self):
@@ -52,9 +57,6 @@ class HelloComponent(ApplicationSession):
 if __name__ == "__main__":
     router_url = os.getenv('ROUTER_URL')
     realm = os.getenv('REALM')
-
-    txaio.use_asyncio()
-    txaio.start_logging(level='debug')
 
     runner = ApplicationRunner(url=router_url, realm=realm)
     runner.run(HelloComponent)
